@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Shop Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        input {
+            margin: 10px;
+        }
+
+        .result-box {
+            margin-top: 20px;
+        }
+
+        .image-container {
+            float: left;
+            margin-left: 100px; /* Adjust the margin as needed */
+        }
+
+        #storeImage {
+            width: 50%; /* Adjust the width as needed */
+            height: auto; /* Maintain the aspect ratio */
+        }
+    </style>
+    <script>
+        function openTab(tabName) {
+            var i, tabContent;
+            tabContent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabContent.length; i++) {
+                tabContent[i].style.display = "none";
+            }
+            document.getElementById(tabName).style.display = "block";
+        }
+
+        function submitQuery(tabName) {
+            // Implement logic to send data to Flask backend and handle SQL queries
+            console.log(`Submitting query for ${tabName}`);
+
+            // Get value from input field
+            var inputValue;
+            if (tabName === 'MarketingSales') {
+                inputValue = document.getElementById("inputValueMarketingSales").value;
+            } else if (tabName === 'Stores') {
+                inputValue = document.getElementById("inputValueStores").value;
+            }
+
+            // Create data to send to the server
+            var data = {
+                tabName: tabName,
+                inputValue: inputValue
+            };
+
+            // Send data to Flask server using fetch
+            fetch("/query", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Display results based on the response from the server
+                    if (tabName === 'MarketingSales') {
+                        document.getElementById("unitSalesResult").innerText = `Unit Sales: ${data.result[0][1]}`;
+                        document.getElementById("dollarsSoldResult").innerText = `Dollars Sold: $${data.result[0][2]}`;
+                    } else if (tabName === 'Stores') {
+                        // Assuming data.result is an array of store information
+                        const storeResultElement = document.getElementById("storeNameResult");
+
+                        // Clear previous content before adding new results
+                        storeResultElement.innerHTML = '';
+                        for (const storeInfo of data.result) {
+                            const storeName = storeInfo[0];
+                            const productName = storeInfo[1];
+                            const productSales = storeInfo[2];
+
+                            // Handle the display logic here, e.g., appending to a list, updating UI elements, etc.
+                            // Adjust the following code according to your HTML structure
+                            storeResultElement.innerHTML += `Store Name: ${storeName}<br>`;
+                            storeResultElement.innerHTML += `Location Name: ${productName}<br>`;
+                            storeResultElement.innerHTML += `Top Selling Product: ${productSales}<br>`;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+</head>
+
+<body>
+
+    <h2>Coffee Shop Management</h2>
+
+    <div>
+        <button onclick="openTab('MarketingSales')">Sales</button>
+        <button onclick="openTab('Stores')">Stores</button>
+    </div>
+
+    <div id="MarketingSales" class="tab-content">
+        <h3>Total Sales</h3>
+        <label for="inputValueMarketingSales">Enter Product Name:</label>
+        <input type="text" id="inputValueMarketingSales">
+
+        <!-- Empty box to show results -->
+        <div id="unitSalesResult" class="result-box"></div>
+        <div id="dollarsSoldResult" class="result-box"></div>
+
+        <div class="image-container">
+            <img id="storeImage" src="{{ url_for('static', filename='images/indoor.png') }}" alt="Store Image">
+        </div>
+
+        <button onclick="submitQuery('MarketingSales')">Submit</button>
+    </div>
+
+    <div id="Stores" class="tab-content">
+        <h3>Stores and their top selling product</h3>
+        <label for="inputValueStores">Enter Location:</label>
+        <input type="text" id="inputValueStores">
+
+        <!-- Empty boxes to show results -->
+        <div id="storeNameResult" class="result-box"></div>
+        <div id="productNameResult" class="result-box"></div>
+        <div id="productSalesResult" class="result-box"></div>
+
+        <div class="image-container">
+            <img id="storeImage" src="{{ url_for('static', filename='images/location.png') }}" alt="Store Image">
+        </div>
+
+        <button onclick="submitQuery('Stores')">Submit</button>
+    </div>
+
+</body>
+
+</html>
